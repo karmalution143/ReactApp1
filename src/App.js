@@ -1,12 +1,11 @@
 import './App.css';
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ReservationBanner from './ReservationBanner';
 import ReservationCreator from './ReservationCreator';
 import ReservationRow from './ReservationRow';
 import VisibilityControl from './VisibilityControl';
 
 function App() {
-
   const [userName] = useState("Tiffany");
 
   const [reservationItems, setReservationItems] = useState([
@@ -19,32 +18,50 @@ function App() {
   const [showCompleted, setShowCompleted] = useState(true);
 
   const createNewReservation = (area, timeSlot) => {
-    if (!reservationItems.find(item => item.area === area && item.timeSlot === timeSlot)) {
-      setReservationItems([
+    if (!reservationItems.find((item) => item.area === area && item.timeSlot === timeSlot)) {
+      const updatedReservations = [
         ...reservationItems,
-        { area, timeSlot, done: false }
-      ]);
+        { area, timeSlot, done: false },
+      ];
+      setReservationItems(updatedReservations);
+      localStorage.setItem("reservations", JSON.stringify(updatedReservations));
     }
   };
 
   const toggleReservation = (reservation) => {
-    setReservationItems(reservationItems.map((item) =>
+    const updatedReservations = reservationItems.map((item) =>
       item.area === reservation.area && item.timeSlot === reservation.timeSlot
         ? { ...item, done: !item.done }
         : item
-    ));
+    );
+    setReservationItems(updatedReservations);
+    localStorage.setItem("reservations", JSON.stringify(updatedReservations));
   };
 
   const reservationTableRows = (doneValue) =>
     reservationItems
-      .filter(item => item.done === doneValue)
-      .map(item => (
+      .filter((item) => item.done === doneValue)
+      .map((item) => (
         <ReservationRow
           key={`${item.area}-${item.timeSlot}`}
           item={item}
           toggle={toggleReservation}
         />
       ));
+
+  useEffect(() => {
+    try {
+      const data = localStorage.getItem("reservations");
+      if (data) {
+        const parsedData = JSON.parse(data);
+        if (Array.isArray(parsedData)) {
+          setReservationItems(parsedData);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load reservations:", error);
+    }
+  }, []); // Runs only once after the initial render
 
   return (
     <div>
